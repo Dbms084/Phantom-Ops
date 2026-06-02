@@ -1,4 +1,4 @@
-# Military Web App
+# PhantomOps - Military Web App 
 
 A full-stack web application for military project management and chat functionality.
 
