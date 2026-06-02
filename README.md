@@ -6,6 +6,9 @@ A full-stack web application for military project management and chat functional
 |----------------------------|--------------|
 | Dhriti Prasad              |              |
 | Soubhadra Bhattacharya     |              |
+|                            |              |
+|                            |              |
+|                            |              |
 
 ## Tech Stack
 
