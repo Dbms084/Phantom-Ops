@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import {
+  generateUserKeyPair,
+  exportPublicKey,
+  exportPrivateKey
+} from "../lib/crypto";
 
 const API_URL = 'http://localhost:8000';
 
@@ -8,22 +13,57 @@ function Login({ onLogin }) {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!username.trim()) return;
-    
-    setLoading(true);
-    try {
-      const response = await axios.post(`${API_URL}/users/`, {
-        username: username.trim()
-      });
-      onLogin(response.data);
-    } catch (error) {
-      console.error('Login failed', error);
-      alert('Failed to login. Please try again.');
-    } finally {
-      setLoading(false);
+  e.preventDefault();
+
+  const trimmedUsername = username.trim();
+
+  if (!trimmedUsername) return;
+
+  setLoading(true);
+
+  try {
+    // Generate cryptographic identity
+    const keyPair = await generateUserKeyPair();
+
+    const publicKey = await exportPublicKey(
+      keyPair.publicKey
+    );
+
+    const privateKey = await exportPrivateKey(
+      keyPair.privateKey
+    );
+
+    // Store private key ONLY in browser
+    localStorage.setItem(
+      `private_key_${trimmedUsername}`,
+      privateKey
+    );
+
+    // Send username + public key to backend
+    const response = await axios.post(
+      `${API_URL}/users/`,
+      {
+        username: trimmedUsername,
+        public_key: publicKey
+      }
+    );
+
+    onLogin(response.data);
+  } catch (error) {
+    console.error("Login failed", error);
+
+    if (error.response) {
+      console.error(
+        "Backend Error:",
+        error.response.data
+      );
     }
-  };
+
+    alert("Failed to login. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="login-container">

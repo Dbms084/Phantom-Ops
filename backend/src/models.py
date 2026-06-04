@@ -16,6 +16,8 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
+    #newly added
+    public_key = Column(Text, nullable=True)
     
     projects = relationship("Project", secondary=project_members, back_populates="members")
 

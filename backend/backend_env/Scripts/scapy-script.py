@@ -1,4 +1,4 @@
-#!C:\Users\dhrit\Downloads\military-chat-app-main\backend\backend_env\Scripts\python.exe
+#!C:\Users\majum\Phantom-Ops\backend\backend_env\Scripts\python.exe
 # EASY-INSTALL-ENTRY-SCRIPT: 'scapy==2.5.0','console_scripts','scapy'
 import re
 import sys

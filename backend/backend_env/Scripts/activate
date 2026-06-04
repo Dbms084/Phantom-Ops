@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\Users\dhrit\Downloads\military-chat-app-main\backend\backend_env"
+VIRTUAL_ENV="C:\Users\majum\Phantom-Ops\backend\backend_env"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

@@ -6,10 +6,13 @@ class UserBase(BaseModel):
     username: str
 
 class UserCreate(UserBase):
-    pass
+    # newly added
+    public_key: str
 
 class User(UserBase):
     id: int
+    # newly added
+    public_key:str | None = None
 
     class Config:
         from_attributes = True

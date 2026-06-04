@@ -57,7 +57,8 @@ def create_or_get_user(user: schemas.UserCreate, db: Session = Depends(database.
     db_user = db.query(models.User).filter(models.User.username == user.username).first()
     if db_user:
         return db_user
-    new_user = models.User(username=user.username)
+    new_user = models.User(username=user.username,
+                           public_key=user.public_key)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
