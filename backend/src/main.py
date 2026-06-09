@@ -76,7 +76,9 @@ def create_project(project: schemas.ProjectCreate, creator_id: int, db: Session 
         raise HTTPException(status_code=404, detail="User not found")
         
     stego_key = ''.join(random.choices(string.ascii_letters + string.digits, k=32))
-    db_project = models.Project(**project.model_dump(), created_by=creator_id, stego_key=stego_key)
+    project_data = project.model_dump()
+    encrypted_project_key= project_data.pop("encrypted_project_key")
+    db_project = models.Project(**project_data, created_by=creator_id, stego_key=stego_key)
     db.add(db_project)
     db.commit()
     db.refresh(db_project)
@@ -87,6 +89,13 @@ def create_project(project: schemas.ProjectCreate, creator_id: int, db: Session 
         role="commander"
     )
     db.execute(stmt)
+    project_key_record = models.ProjectMemberKey(
+    project_id=db_project.id,
+    user_id=creator_id,
+    encrypted_project_key=encrypted_project_key
+    )
+
+    db.add(project_key_record)
     db.commit()
     db.refresh(db_project)
     
@@ -189,7 +198,7 @@ def get_project_messages(project_id: int, user_id: int, db: Session = Depends(da
     for m in messages:
         m_dict = {
             "id": m.id, "sender_id": m.sender_id, "project_id": m.project_id,
-            "content": m.content, "timestamp": m.timestamp,
+            "content": m.content, "timestamp": m.timestamp,"iv": m.iv,
             "self_destruct_time": m.self_destruct_time, "is_destroyed": m.is_destroyed,
             "sensitivity": m.sensitivity,
             "recipient_type": m.recipient_type
@@ -225,6 +234,7 @@ def send_project_message(project_id: int, sender_id: int, message: schemas.Messa
         sender_id=sender_id,
         project_id=project_id,
         content=message.content,
+        iv=message.iv,
         sensitivity=sensitivity,
         recipient_type=message.recipient_type
     )

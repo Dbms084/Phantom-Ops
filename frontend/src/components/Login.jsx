@@ -6,6 +6,9 @@ import {
   exportPrivateKey
 } from "../lib/crypto";
 
+
+
+
 const API_URL = 'http://localhost:8000';
 
 function Login({ onLogin }) {
@@ -32,6 +35,7 @@ function Login({ onLogin }) {
     const privateKey = await exportPrivateKey(
       keyPair.privateKey
     );
+
 
     // Store private key ONLY in browser
     localStorage.setItem(

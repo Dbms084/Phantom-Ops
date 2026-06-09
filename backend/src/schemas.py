@@ -22,7 +22,7 @@ class ProjectBase(BaseModel):
     description: Optional[str] = None
 
 class ProjectCreate(ProjectBase):
-    pass
+    encrypted_project_key:str
 
 class Project(ProjectBase):
     id: int
@@ -44,6 +44,7 @@ class MessageBase(BaseModel):
     content: str
 
 class MessageCreate(MessageBase):
+    iv: Optional[str] = None
     self_destruct_seconds: Optional[int] = None
     recipient_type: str = "project"
 
@@ -51,6 +52,7 @@ class Message(MessageBase):
     id: int
     sender_id: int
     project_id: int
+    iv: Optional[str] = None
     timestamp: datetime
     self_destruct_time: Optional[datetime] = None
     is_destroyed: bool = False

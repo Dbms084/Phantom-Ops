@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { getRandomCoverImage, hideACKInImage, hideACKSpreadSpectrum, getHidingMethod, sendHighSensitivityACK } from '../lib/stego';
+import {
+  generateProjectKey,
+  exportProjectKey,
+  importPublicKey,
+  encryptProjectKey,
+  importProjectKey,
+  encryptMessage,
+  decryptMessage
+} from "../lib/crypto";
 
 const API_URL = 'http://localhost:8000';
 
@@ -78,7 +87,15 @@ function Chat({ currentUser, onLogout }) {
       
       const validMessages = [];
       const now = Date.now();
-      
+      const storedKey = localStorage.getItem(
+        `temp_project_key_${activeProject.name}`
+      );
+
+      let projectKey = null;
+
+      if (storedKey) {
+        projectKey = await importProjectKey(storedKey);
+      }
       for (const msg of response.data) {
         if (msg.self_destruct_time) {
           const timeStr = msg.self_destruct_time.endsWith('Z') ? msg.self_destruct_time : msg.self_destruct_time + 'Z';
@@ -91,6 +108,25 @@ function Chat({ currentUser, onLogout }) {
             continue; // Do not render expired messages
           }
         }
+        if (
+          projectKey &&
+          msg.iv &&
+          msg.content
+        ) {
+          try {
+            msg.content = await decryptMessage(
+              msg.content,
+              msg.iv,
+              projectKey
+            );
+          } catch (err) {
+            console.error(
+              "Failed to decrypt message",
+              err
+            );
+          }
+        }
+
         validMessages.push(msg);
       }
       setMessages(validMessages);
@@ -163,10 +199,29 @@ function Chat({ currentUser, onLogout }) {
     if (!inputMessage.trim() || !activeProject) return;
 
     try {
-      const payload = { 
-        content: inputMessage.trim(), 
-        recipient_type: recipientType 
-      };
+      const storedKey = localStorage.getItem(
+  `temp_project_key_${activeProject.name}`
+);
+
+if (!storedKey) {
+  alert("Project key not found");
+  return;
+}
+
+const projectKey =
+  await importProjectKey(storedKey);
+
+const encrypted =
+  await encryptMessage(
+    inputMessage.trim(),
+    projectKey
+  );
+
+const payload = {
+  content: encrypted.ciphertext,
+  iv: encrypted.iv,
+  recipient_type: recipientType
+};
       if (timerOption > 0) {
         payload.self_destruct_seconds = timerOption;
       }
@@ -179,19 +234,54 @@ function Chat({ currentUser, onLogout }) {
   };
 
   const createProject = async (e) => {
-    e.preventDefault();
-    if (!newProjectName.trim()) return;
-    try {
-      await axios.post(`${API_URL}/projects/?creator_id=${currentUser.id}`, {
+  e.preventDefault();
+
+  if (!newProjectName.trim()) return;
+
+  try {
+    const projectKey = await generateProjectKey();
+
+    const exportedProjectKey =
+      await exportProjectKey(projectKey);
+
+    localStorage.setItem(
+    `temp_project_key_${newProjectName.trim()}`,
+      exportedProjectKey
+    );
+
+    const publicKey = await importPublicKey(
+      currentUser.public_key
+    );
+
+    const encryptedProjectKey =
+      await encryptProjectKey(
+        exportedProjectKey,
+        publicKey
+      );
+
+    console.log(
+      "Encrypted Project Key:",
+      encryptedProjectKey
+    );
+
+    await axios.post(
+      `${API_URL}/projects/?creator_id=${currentUser.id}`,
+      {
         name: newProjectName.trim(),
-        description: 'Classified Operation'
-      });
-      setNewProjectName('');
-      fetchProjects();
-    } catch (error) {
-      console.error('Failed to create project', error);
-    }
-  };
+        description: "Classified Operation",
+        encrypted_project_key: encryptedProjectKey
+      }
+    );
+
+    setNewProjectName("");
+    fetchProjects();
+  } catch (error) {
+    console.error(
+      "Failed to create project",
+      error
+    );
+  }
+};
 
   const addMember = async (e) => {
     e.preventDefault();

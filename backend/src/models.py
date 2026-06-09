@@ -20,6 +20,7 @@ class User(Base):
     public_key = Column(Text, nullable=True)
     
     projects = relationship("Project", secondary=project_members, back_populates="members")
+    project_keys = relationship("ProjectMemberKey",back_populates="user")
 
 class Project(Base):
     __tablename__ = "projects"
@@ -34,6 +35,32 @@ class Project(Base):
 
     members = relationship("User", secondary=project_members, back_populates="projects")
     messages = relationship("Message", back_populates="project")
+    project_keys = relationship("ProjectMemberKey",back_populates="project")
+    
+class ProjectMemberKey(Base):
+    __tablename__ = "project_member_keys"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    project_id = Column(
+        Integer,
+        ForeignKey("projects.id"),
+        nullable=False
+    )
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    encrypted_project_key = Column(
+        Text,
+        nullable=False
+    )
+
+    project = relationship("Project",back_populates="project_keys")
+    user = relationship("User",back_populates="project_keys")
 
 class Message(Base):
     __tablename__ = "messages"
@@ -42,6 +69,7 @@ class Message(Base):
     sender_id = Column(Integer, ForeignKey("users.id"))
     project_id = Column(Integer, ForeignKey("projects.id"))
     content = Column(Text)
+    iv = Column(Text, nullable=True)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
     self_destruct_time = Column(DateTime(timezone=True), nullable=True)
     is_destroyed = Column(Boolean, default=False)
