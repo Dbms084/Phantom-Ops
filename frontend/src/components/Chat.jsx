@@ -295,9 +295,33 @@ const payload = {
         return;
       }
 
-      await axios.post(`${API_URL}/projects/${activeProject.id}/members?user_id=${currentUser.id}`, {
-        user_id: user.id
-      });
+      const storedKey = localStorage.getItem(
+  `temp_project_key_${activeProject.name}`
+);
+
+if (!storedKey) {
+  alert("Project key not found");
+  return;
+}
+
+const memberPublicKey =
+  await importPublicKey(
+    user.public_key
+  );
+
+const encryptedProjectKey =
+  await encryptProjectKey(
+    storedKey,
+    memberPublicKey
+  );
+
+await axios.post(
+  `${API_URL}/projects/${activeProject.id}/members?user_id=${currentUser.id}`,
+  {
+    user_id: user.id,
+    encrypted_project_key: encryptedProjectKey
+  }
+);
       setNewMemberUsername('');
       alert('Operator added to operation.');
       if (showMembers) fetchProjectMembers();

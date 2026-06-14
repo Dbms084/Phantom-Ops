@@ -152,6 +152,12 @@ def add_project_member(project_id: int, member_data: schemas.ProjectMemberAdd, u
         
     if user not in project.members:
         project.members.append(user)
+        project_key_record = models.ProjectMemberKey(
+        project_id=project_id,
+        user_id=user.id,
+        encrypted_project_key=member_data.encrypted_project_key
+    )
+        db.add(project_key_record)
         db.commit()
         db.refresh(project)
         

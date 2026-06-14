@@ -39,6 +39,7 @@ class Project(ProjectBase):
 
 class ProjectMemberAdd(BaseModel):
     user_id: int
+    encrypted_project_key: str
 
 class MessageBase(BaseModel):
     content: str
